@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import api from '../services/api';
 
 interface AuthContextData {
+  loading: boolean;
   user: object;
   login(credentials: LoginCredentials): Promise<void>;
   logout(): void;
@@ -28,6 +29,7 @@ export const AuthContext = createContext<AuthContextData>(
 
 export const AuthProvider: React.FC = ({ children }) => {
   const [data, setData] = useState<AuthState>({} as AuthState);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStorageData(): Promise<void> {
@@ -38,6 +40,8 @@ export const AuthProvider: React.FC = ({ children }) => {
       if (token[1] && user[1]) {
         setData({ token: token[1], user: JSON.parse(user[1]) });
       }
+
+      setLoading(false);
     }
 
     loadStorageData();
@@ -61,10 +65,12 @@ export const AuthProvider: React.FC = ({ children }) => {
 
   const logout = useCallback(async () => {
     await AsyncStorage.multiRemove(['@GoBarber:token', '@GoBarber:user']);
+
+    setData({} as AuthState);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user: data.user, login, logout }}>
+    <AuthContext.Provider value={{ loading, user: data.user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
